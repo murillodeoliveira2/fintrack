@@ -1,0 +1,73 @@
+{
+  "versao": 1,
+  "atualizado": "2026-05-25T20:27:06.092Z",
+  "gastos": [
+    {
+      "id": 1779739136297,
+      "date": "2026-05-25",
+      "desc": "Janeiro",
+      "cat": "Outros",
+      "val": 3878,
+      "moeda": "BRL",
+      "valBRL": 3878
+    },
+    {
+      "id": 1779739179304,
+      "date": "2026-05-25",
+      "desc": "Fevereiro",
+      "cat": "Outros",
+      "val": 3647,
+      "moeda": "BRL",
+      "valBRL": 3647
+    }
+  ],
+  "lucros": [
+    {
+      "id": 1779739067571,
+      "date": "2026-01-01",
+      "desc": "Janeiro",
+      "cat": "Cripto",
+      "moeda": "USD",
+      "val": 1304,
+      "cotSnap": 5.0179,
+      "valBRL": 6543.3416
+    },
+    {
+      "id": 1779739100235,
+      "date": "2026-02-01",
+      "desc": "Fevereiro",
+      "cat": "Cripto",
+      "moeda": "USD",
+      "val": 4250,
+      "cotSnap": 5.0179,
+      "valBRL": 21326.075
+    }
+  ],
+  "invest": [
+    {
+      "id": 1779738492258,
+      "date": "2026-05-25",
+      "nome": "BTC",
+      "tipo": "Cripto (trade)",
+      "moeda": "USD",
+      "aporte": 100,
+      "precoMedio": 63000,
+      "qtd": 0.0015873015873015873,
+      "cotSnap": 5.0149,
+      "aporteBRL": 501.49
+    },
+    {
+      "id": 1779738937179,
+      "date": "2026-05-25",
+      "nome": "CDI",
+      "tipo": "Renda Fixa",
+      "moeda": "BRL",
+      "aporte": 40000,
+      "aporteBRL": 40000,
+      "cotSnap": 5.0149,
+      "precoMedio": 0,
+      "qtd": 0,
+      "atualRF": 41600
+    }
+  ]
+}

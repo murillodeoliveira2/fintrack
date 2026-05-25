@@ -1,6 +1,6 @@
 {
   "versao": 1,
-  "atualizado": "2026-05-25T20:34:33.726Z",
+  "atualizado": "2026-05-25T20:39:21.377Z",
   "gastos": [
     {
       "id": 1779739136297,
@@ -61,6 +61,16 @@
       "val": 23236,
       "cotSnap": 5.0177,
       "valBRL": 116591.2772
+    },
+    {
+      "id": 1779741559365,
+      "date": "2026-05-01",
+      "desc": "Maio",
+      "cat": "Cripto",
+      "moeda": "USD",
+      "val": 2663,
+      "cotSnap": 5.0177,
+      "valBRL": 13362.1351
     }
   ],
   "invest": [

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Financeiro</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #0e0f14;
+  --bg2: #13151d;
+  --bg3: #1a1d28;
+  --bg4: #22263a;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #e8eaf2;
+  --text2: #8b90a8;
+  --text3: #555a72;
+  --accent: #6c63ff;
+  --accent2: #8b85ff;
+  --green: #3ecf8e;
+  --red: #f26b6b;
+  --amber: #f5a623;
+  --blue: #4da6ff;
+  --purple: #b06dff;
+  --font: 'Syne', sans-serif;
+  --mono: 'DM Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 4px; }
+
+/* layout */
+.shell { display: flex; min-height: 100vh; }
+
+/* sidebar */
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  padding: 24px 0;
+  position: sticky; top: 0; height: 100vh;
+}
+.logo {
+  padding: 0 20px 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.logo-mark { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+.logo-sub { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 20px; margin: 2px 10px;
+  border-radius: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 500; color: var(--text2);
+  transition: all .15s; border: none; background: none; width: calc(100% - 20px); text-align: left;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: var(--bg4); color: var(--text); }
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; opacity: .7; }
+.nav-item.active svg { opacity: 1; }
+
+.sidebar-bottom {
+  margin-top: auto; padding: 16px 20px 0;
+  border-top: 1px solid var(--border);
+}
+.cot-block { margin-bottom: 10px; }
+.cot-label { font-size: 10px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+.cot-val { font-size: 15px; font-weight: 600; color: var(--text); font-family: var(--mono); }
+.cot-sub { font-size: 10px; color: var(--text3); margin-top: 1px; font-family: var(--mono); }
+.btn-refresh {
+  width: 100%; padding: 7px; background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 7px; color: var(--text2); font-size: 11px; font-family: var(--font);
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
+  transition: all .15s; margin-top: 12px; font-weight: 500;
+}
+.btn-refresh:hover { background: var(--bg4); color: var(--text); }
+.spin-icon { display: inline-block; transition: transform .3s; }
+.spinning .spin-icon { animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* main */
+.main { flex: 1; padding: 28px 32px; overflow: auto; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* top bar */
+.page-header { margin-bottom: 24px; }
+.page-title { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -.5px; }
+.page-sub { font-size: 13px; color: var(--text2); margin-top: 3px; font-family: var(--mono); }
+
+/* metrics row */
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.metric {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px;
+  transition: border-color .15s;
+}
+.metric:hover { border-color: var(--border2); }
+.metric .m-label { font-size: 10px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+.metric .m-val { font-size: 20px; font-weight: 700; color: var(--text); font-family: var(--mono); }
+.metric .m-sub { font-size: 10px; color: var(--text3); margin-top: 3px; font-family: var(--mono); }
+.m-val.green { color: var(--green); }
+.m-val.red { color: var(--red); }
+.m-val.blue { color: var(--blue); }
+.m-val.amber { color: var(--amber); }
+.m-val.purple { color: var(--purple); }
+
+/* saldo bar */
+.saldo-banner {
+  border-radius: 12px; padding: 16px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; border: 1px solid;
+  flex-wrap: wrap; gap: 10px;
+}
+.saldo-banner.pos { background: rgba(62,207,142,.06); border-color: rgba(62,207,142,.2); }
+.saldo-banner.neg { background: rgba(242,107,107,.06); border-color: rgba(242,107,107,.2); }
+.saldo-label { font-size: 12px; margin-bottom: 3px; font-weight: 500; }
+.saldo-detail { font-size: 11px; font-family: var(--mono); }
+.saldo-num { font-size: 26px; font-weight: 700; font-family: var(--mono); }
+.saldo-banner.pos .saldo-label { color: var(--green); }
+.saldo-banner.pos .saldo-detail { color: rgba(62,207,142,.6); }
+.saldo-banner.pos .saldo-num { color: var(--green); }
+.saldo-banner.neg .saldo-label { color: var(--red); }
+.saldo-banner.neg .saldo-detail { color: rgba(242,107,107,.6); }
+.saldo-banner.neg .saldo-num { color: var(--red); }
+
+/* two col */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media(max-width: 900px) { .two-col { grid-template-columns: 1fr; } .sidebar { width: 64px; } .sidebar .logo-sub, .sidebar .nav-item span, .sidebar .cot-block, .sidebar .btn-refresh { display: none; } .main { padding: 20px 16px; } }
+
+/* card */
+.card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  margin-bottom: 16px; display: flex; align-items: center; gap: 7px;
+}
+.card-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+/* chart */
+.chart-wrap { position: relative; width: 100%; height: 220px; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+.legend span { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); font-family: var(--mono); }
+.legend .sq { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+/* form */
+.form-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px; align-items: end;
+}
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 11px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: .4px; }
+.field input, .field select {
+  height: 36px; padding: 0 10px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 8px; color: var(--text); font-size: 13px; font-family: var(--font);
+  outline: none; transition: border-color .15s; width: 100%;
+}
+.field input:focus, .field select:focus { border-color: var(--accent); }
+.field select option { background: var(--bg3); }
+.btn-add {
+  height: 36px; padding: 0 18px;
+  background: var(--accent); border: none; border-radius: 8px;
+  color: #fff; font-size: 13px; font-family: var(--font); font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; gap: 5px;
+  transition: all .15s; white-space: nowrap;
+}
+.btn-add:hover { background: var(--accent2); transform: translateY(-1px); }
+.btn-add:active { transform: none; }
+.preview-conv {
+  font-size: 11px; color: var(--text3); margin-top: 8px;
+  font-family: var(--mono); min-height: 16px;
+}
+.preview-conv.ok { color: var(--amber); }
+
+/* filters */
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.fbtn {
+  padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500;
+  border: 1px solid var(--border2); background: transparent;
+  color: var(--text2); cursor: pointer; transition: all .12s; font-family: var(--font);
+}
+.fbtn:hover { border-color: var(--accent); color: var(--text); }
+.fbtn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* list */
+.list { display: flex; flex-direction: column; gap: 5px; max-height: 320px; overflow-y: auto; }
+.row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; background: var(--bg3); border-radius: 8px;
+  border: 1px solid transparent; transition: border-color .1s;
+}
+.row:hover { border-color: var(--border2); }
+.badge {
+  padding: 2px 9px; border-radius: 20px; font-size: 10px; font-weight: 600;
+  flex-shrink: 0; font-family: var(--mono); letter-spacing: .3px;
+}
+.cur-badge {
+  padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 700;
+  background: rgba(245,166,35,.15); color: var(--amber); font-family: var(--mono);
+  border: 1px solid rgba(245,166,35,.3); flex-shrink: 0;
+}
+.row .desc { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; font-size: 13px; }
+.row .dt { color: var(--text3); font-size: 10px; flex-shrink: 0; font-family: var(--mono); }
+.row .amt { font-weight: 700; flex-shrink: 0; font-family: var(--mono); font-size: 13px; }
+.row .amt-sub { font-size: 10px; color: var(--text3); flex-shrink: 0; font-family: var(--mono); }
+.amt.green { color: var(--green); }
+.amt.red { color: var(--red); }
+.del-btn {
+  background: none; border: none; cursor: pointer; color: var(--text3);
+  font-size: 14px; padding: 2px 5px; border-radius: 5px; line-height: 1;
+  transition: all .1s; flex-shrink: 0;
+}
+.del-btn:hover { color: var(--red); background: rgba(242,107,107,.1); }
+.empty { text-align: center; color: var(--text3); font-size: 12px; padding: 28px; font-family: var(--mono); }
+
+/* invest cards */
+.inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.inv-card {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px; transition: border-color .15s;
+}
+.inv-card:hover { border-color: var(--border2); }
+.inv-card-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+.inv-name { font-size: 15px; font-weight: 700; color: var(--text); }
+.inv-tipo { margin-top: 4px; margin-bottom: 12px; }
+.inv-row { display: flex; justify-content: space-between; font-size: 11px; margin-top: 5px; }
+.inv-row .k { color: var(--text3); font-family: var(--mono); }
+.inv-row .v { font-weight: 600; color: var(--text); font-family: var(--mono); }
+.inv-pnl {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
+  font-family: var(--mono);
+}
+.inv-pnl .label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .4px; }
+.inv-pnl .val { font-size: 14px; font-weight: 700; }
+.inv-atual-wrap { display: flex; align-items: center; gap: 6px; }
+.inv-atual-input {
+  width: 100px; height: 26px; padding: 0 7px;
+  background: var(--bg4); border: 1px solid var(--border2);
+  border-radius: 6px; color: var(--text); font-size: 11px; font-family: var(--mono);
+  outline: none;
+}
+.inv-atual-input:focus { border-color: var(--accent); }
+
+/* divider */
+.divider { height: 1px; background: var(--border); margin: 4px 0 16px; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">FinTrack</div>
+    <div class="logo-sub">painel pessoal</div>
+  </div>
+
+  <button class="nav-item active" onclick="sw('visao')" id="nav-visao">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>Visão geral</span>
+  </button>
+  <button class="nav-item" onclick="sw('gastos')" id="nav-gastos">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+    <span>Gastos</span>
+  </button>
+  <button class="nav-item" onclick="sw('lucros')" id="nav-lucros">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+    <span>Lucros</span>
+  </button>
+  <button class="nav-item" onclick="sw('invest')" id="nav-invest">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+    <span>Investimentos</span>
+  </button>
+
+  <div class="sidebar-bottom">
+    <div class="cot-block">
+      <div class="cot-label">USD / BRL</div>
+      <div class="cot-val" id="cotUSD">—</div>
+      <div class="cot-sub" id="cotUSD-st">aguardando...</div>
+    </div>
+    <div class="cot-block">
+      <div class="cot-label">BTC / USD</div>
+      <div class="cot-val" id="cotBTC">—</div>
+      <div class="cot-sub" id="cotBTC-st">aguardando...</div>
+    </div>
+    <button class="btn-refresh" id="btnRefresh" onclick="fetchCotacoes()">
+      <span class="spin-icon">↻</span> Atualizar cotações
+    </button>
+    <div style="margin-top:12px;font-size:10px;color:var(--text3);font-family:var(--mono);">
+      <select id="selYear" style="background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;padding:4px 6px;font-family:var(--mono);width:100%;outline:none;cursor:pointer;"></select>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- VISÃO GERAL -->
+  <div class="page active" id="page-visao">
+    <div class="page-header">
+      <div class="page-title">Visão geral</div>
+      <div class="page-sub" id="sub-ano">—</div>
+    </div>
+    <div class="metrics" id="metrics"></div>
+    <div id="saldoBanner"></div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Resultado por mês (R$)</div>
+        <div class="legend">
+          <span><span class="sq" style="background:#3ecf8e"></span>Lucros</span>
+          <span><span class="sq" style="background:#f26b6b"></span>Gastos</span>
+          <span><span class="sq" style="background:#4da6ff"></span>Saldo</span>
+          <span><span class="sq" style="background:#f5a623"></span>Saldo neg.</span>
+        </div>
+        <div class="chart-wrap"><canvas id="cGeral" role="img" aria-label="Grafico de lucros gastos e saldo por mes">Comparativo mensal.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--purple)"></span>Origens dos lucros</div>
+        <div id="legLucros" class="legend"></div>
+        <div class="chart-wrap" style="height:190px"><canvas id="cLucros" role="img" aria-label="Pizza de origens dos lucros">Distribuicao dos lucros.</canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GASTOS -->
+  <div class="page" id="page-gastos">
+    <div class="page-header">
+      <div class="page-title">Gastos pessoais</div>
+      <div class="page-sub">registre suas despesas do dia a dia</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--red)"></span>Novo gasto</div>
+      <div class="form-grid">
+        <div class="field"><label>Data</label><input type="date" id="gDate"></div>
+        <div class="field"><label>Descrição</label><input type="text" id="gDesc" placeholder="Ex: Mercado, Aluguel..."></div>
+        <div class="field"><label>Categoria</label>
+          <select id="gCat"><option>Moradia</option><option>Alimentacao</option><option>Transporte</option><option>Saude</option><option>Lazer</option><option>Educacao</option><option>Vestuario</option><option>Outros</option></select>
+        </div>
+        <div class="field"><label>Valor (R$)</label><input type="number" id="gVal" placeholder="0,00" min="0" step="0.01"></div>
+        <div class="field" style="justify-content:flex-end"><label style="opacity:0">add</label><button class="btn-add" onclick="addG()">+ Adicionar</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--red)"></span>Lançamentos</div>
+      <div class="filters" id="fG"></div>
+      <div class="list" id="listG"></div>
+    </div>
+  </div>
+
+  <!-- LUCROS -->
+  <div class="page" id="page-lucros">
+    <div class="page-header">
+      <div class="page-title">Lucros</div>
+      <div class="page-sub">cripto · bet esportiva · defi — com conversão em tempo real</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--green)"></span>Novo lucro</div>
+      <div class="form-grid">
+        <div class="field"><label>Data</label><input type="date" id="lDate"></div>
+        <div class="field"><label>Descrição</label><input type="text" id="lDesc" placeholder="Ex: Venda BTC, Aposta..."></div>
+        <div class="field"><label>Origem</label>
+          <select id="lCat" onchange="toggleLMoeda()"><option>Cripto</option><option>Bet Esportiva</option><option>DeFi</option><option>Outros</option></select>
+        </div>
+        <div class="field"><label>Moeda</label>
+          <select id="lMoeda" onchange="updatePreviewL()"><option value="USD">$ Dólar (USD)</option><option value="BRL">R$ Real (BRL)</option></select>
+        </div>
+        <div class="field"><label>Valor</label><input type="number" id="lVal" placeholder="0,00" min="0" step="0.01" oninput="updatePreviewL()"></div>
+        <div class="field" style="justify-content:flex-end"><label style="opacity:0">add</label><button class="btn-add" onclick="addL()">+ Adicionar</button></div>
+      </div>
+      <div class="preview-conv" id="prevL"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--green)"></span>Lançamentos</div>
+      <div class="filters" id="fL"></div>
+      <div class="list" id="listL"></div>
+    </div>
+  </div>
+
+  <!-- INVESTIMENTOS -->
+  <div class="page" id="page-invest">
+    <div class="page-header">
+      <div class="page-title">Investimentos</div>
+      <div class="page-sub">carteira de cripto, defi e renda fixa</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Registrar posição</div>
+      <div class="form-grid">
+        <div class="field"><label>Nome</label><input type="text" id="iNome" placeholder="Ex: BTC, ETH, Tesouro..."></div>
+        <div class="field"><label>Tipo</label>
+          <select id="iTipo"><option>Cripto (trade)</option><option>DeFi / Yield</option><option>Renda Fixa</option><option>Ações</option><option>Fundo</option><option>Outros</option></select>
+        </div>
+        <div class="field"><label>Moeda</label>
+          <select id="iMoeda" onchange="updatePreviewI()"><option value="USD">$ Dólar</option><option value="BRL">R$ Real</option></select>
+        </div>
+        <div class="field"><label>Valor investido</label><input type="number" id="iAporte" placeholder="0,00" min="0" step="0.01" oninput="updatePreviewI()"></div>
+        <div class="field"><label>Valor atual</label><input type="number" id="iAtual" placeholder="0,00" min="0" step="0.01" oninput="updatePreviewI()"></div>
+        <div class="field" style="justify-content:flex-end"><label style="opacity:0">add</label><button class="btn-add" onclick="addI()">+ Adicionar</button></div>
+      </div>
+      <div class="preview-conv" id="prevI"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Carteira</div>
+      <div class="metrics" id="invMetrics" style="margin-bottom:16px;grid-template-columns:repeat(auto-fit,minmax(120px,1fr))"></div>
+      <div class="inv-grid" id="invGrid"></div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+const MONTHS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const GCAT={
+  'Moradia':     {bg:'rgba(77,166,255,.15)',tc:'#4da6ff'},
+  'Alimentacao': {bg:'rgba(62,207,142,.15)',tc:'#3ecf8e'},
+  'Transporte':  {bg:'rgba(245,166,35,.15)',tc:'#f5a623'},
+  'Saude':       {bg:'rgba(176,109,255,.15)',tc:'#b06dff'},
+  'Lazer':       {bg:'rgba(242,107,107,.15)',tc:'#f26b6b'},
+  'Educacao':    {bg:'rgba(108,99,255,.15)',tc:'#6c63ff'},
+  'Vestuario':   {bg:'rgba(255,159,67,.15)',tc:'#ff9f43'},
+  'Outros':      {bg:'rgba(139,144,168,.15)',tc:'#8b90a8'},
+};
+const LCAT={
+  'Cripto':       {bg:'rgba(245,166,35,.15)',tc:'#f5a623'},
+  'Bet Esportiva':{bg:'rgba(62,207,142,.15)',tc:'#3ecf8e'},
+  'DeFi':         {bg:'rgba(108,99,255,.15)',tc:'#6c63ff'},
+  'Outros':       {bg:'rgba(139,144,168,.15)',tc:'#8b90a8'},
+};
+const ICAT={
+  'Cripto (trade)':{bg:'rgba(245,166,35,.15)',tc:'#f5a623'},
+  'DeFi / Yield':  {bg:'rgba(108,99,255,.15)',tc:'#6c63ff'},
+  'Renda Fixa':    {bg:'rgba(62,207,142,.15)',tc:'#3ecf8e'},
+  'Ações':         {bg:'rgba(77,166,255,.15)',tc:'#4da6ff'},
+  'Fundo':         {bg:'rgba(176,109,255,.15)',tc:'#b06dff'},
+  'Outros':        {bg:'rgba(139,144,168,.15)',tc:'#8b90a8'},
+};
+const LCOLORS=['#f5a623','#3ecf8e','#6c63ff','#8b90a8'];
+
+let usdRate=5.80, btcPrice=0;
+let gastos=JSON.parse(localStorage.getItem('ft_g')||'[]');
+let lucros=JSON.parse(localStorage.getItem('ft_l')||'[]');
+let invest=JSON.parse(localStorage.getItem('ft_i')||'[]');
+let gFilter='Todos', lFilter='Todos';
+let chartG=null, chartL=null;
+
+function save(){
+  localStorage.setItem('ft_g',JSON.stringify(gastos));
+  localStorage.setItem('ft_l',JSON.stringify(lucros));
+  localStorage.setItem('ft_i',JSON.stringify(invest));
+}
+
+async function fetchCotacoes(){
+  const btn=document.getElementById('btnRefresh');
+  btn.classList.add('spinning');
+  document.getElementById('cotUSD-st').textContent='buscando...';
+  document.getElementById('cotBTC-st').textContent='buscando...';
+  try{
+    const r=await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL,BTC-BRL');
+    const d=await r.json();
+    if(d.USDBRL){
+      usdRate=parseFloat(d.USDBRL.bid);
+      document.getElementById('cotUSD').textContent='R$ '+usdRate.toFixed(2);
+      const t=new Date(d.USDBRL.timestamp*1000);
+      document.getElementById('cotUSD-st').textContent=t.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    }
+    if(d.BTCBRL){
+      btcPrice=parseFloat(d.BTCBRL.bid)/usdRate;
+      document.getElementById('cotBTC').textContent='$'+Math.round(btcPrice).toLocaleString('pt-BR');
+      document.getElementById('cotBTC-st').textContent='ao vivo';
+    }
+  }catch(e){
+    document.getElementById('cotUSD').textContent='R$ '+usdRate.toFixed(2);
+    document.getElementById('cotUSD-st').textContent='offline';
+    document.getElementById('cotBTC').textContent='indisponível';
+    document.getElementById('cotBTC-st').textContent='offline';
+  }
+  btn.classList.remove('spinning');
+  render();
+}
+
+function brl(v){return 'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function usd(v){return '$ '+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function toReal(val,moeda){return moeda==='USD'?val*usdRate:val;}
+
+function curYear(){return parseInt(document.getElementById('selYear')?.value||new Date().getFullYear());}
+function yearData(arr){const y=curYear();return arr.filter(e=>new Date(e.date+'T00:00').getFullYear()===y);}
+
+function buildYears(){
+  const all=[...gastos,...lucros,...invest];
+  const yrs=new Set(all.map(e=>new Date((e.date||new Date().toISOString().split('T')[0])+'T00:00').getFullYear()));
+  yrs.add(new Date().getFullYear());
+  const sel=document.getElementById('selYear');
+  const cur=sel.value||String(new Date().getFullYear());
+  sel.innerHTML=[...yrs].sort((a,b)=>b-a).map(y=>`<option value="${y}"${y==cur?' selected':''}>${y}</option>`).join('');
+  sel.onchange=render;
+}
+
+function toggleLMoeda(){
+  const cat=document.getElementById('lCat').value;
+  document.getElementById('lMoeda').value=(cat==='Cripto'||cat==='DeFi')?'USD':'BRL';
+  updatePreviewL();
+}
+
+function updatePreviewL(){
+  const v=parseFloat(document.getElementById('lVal').value)||0;
+  const m=document.getElementById('lMoeda').value;
+  const p=document.getElementById('prevL');
+  if(!v){p.textContent='';p.className='preview-conv';return;}
+  if(m==='USD'){
+    p.textContent=usd(v)+' × cotação R$ '+usdRate.toFixed(2)+' = '+brl(v*usdRate)+' (cotação registrada ao salvar)';
+    p.className='preview-conv ok';
+  } else {
+    p.textContent=brl(v);
+    p.className='preview-conv';
+  }
+}
+
+function updatePreviewI(){
+  const a=parseFloat(document.getElementById('iAporte').value)||0;
+  const c=parseFloat(document.getElementById('iAtual').value)||0;
+  const m=document.getElementById('iMoeda').value;
+  const p=document.getElementById('prevI');
+  if(!a){p.textContent='';return;}
+  const ar=toReal(a,m),cr=toReal(c||a,m),pnl=cr-ar,pct=ar>0?(pnl/ar*100):0;
+  p.textContent='P&L estimado: '+(pnl>=0?'+':'')+brl(pnl)+' ('+(pct>=0?'+':'')+pct.toFixed(1)+'%) — USD = R$ '+usdRate.toFixed(2);
+  p.className='preview-conv '+(pnl>=0?'ok':'');
+}
+
+function addG(){
+  const d=document.getElementById('gDate').value,ds=document.getElementById('gDesc').value.trim(),c=document.getElementById('gCat').value,v=parseFloat(document.getElementById('gVal').value);
+  if(!d||!ds||!v||v<=0){alert('Preencha todos os campos.');return;}
+  gastos.push({id:Date.now(),date:d,desc:ds,cat:c,val:v,moeda:'BRL',valBRL:v});
+  save();document.getElementById('gDesc').value='';document.getElementById('gVal').value='';
+  buildYears();render();
+}
+
+function addL(){
+  const d=document.getElementById('lDate').value,ds=document.getElementById('lDesc').value.trim(),c=document.getElementById('lCat').value,m=document.getElementById('lMoeda').value,v=parseFloat(document.getElementById('lVal').value);
+  if(!d||!ds||!v||v<=0){alert('Preencha todos os campos.');return;}
+  lucros.push({id:Date.now(),date:d,desc:ds,cat:c,moeda:m,val:v,cotSnap:usdRate,valBRL:m==='USD'?v*usdRate:v});
+  save();document.getElementById('lDesc').value='';document.getElementById('lVal').value='';document.getElementById('prevL').textContent='';
+  buildYears();render();
+}
+
+function addI(){
+  const n=document.getElementById('iNome').value.trim(),t=document.getElementById('iTipo').value,m=document.getElementById('iMoeda').value,a=parseFloat(document.getElementById('iAporte').value),c=parseFloat(document.getElementById('iAtual').value);
+  if(!n||!a){alert('Preencha nome e valor investido.');return;}
+  invest.push({id:Date.now(),date:new Date().toISOString().split('T')[0],nome:n,tipo:t,moeda:m,aporte:a,atual:c||a,cotSnap:usdRate,aporteBRL:toReal(a,m),atualBRL:toReal(c||a,m)});
+  save();['iNome','iAporte','iAtual'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('prevI').textContent='';
+  buildYears();render();
+}
+
+function delG(id){gastos=gastos.filter(e=>e.id!==id);save();buildYears();render();}
+function delL(id){lucros=lucros.filter(e=>e.id!==id);save();buildYears();render();}
+function delI(id){invest=invest.filter(e=>e.id!==id);save();buildYears();render();}
+
+function updateInvAtual(id,val){
+  const i=invest.find(e=>e.id===id);
+  if(!i)return;
+  i.atual=parseFloat(val)||0;
+  i.atualBRL=toReal(i.atual,i.moeda);
+  save();renderInvest();renderMetrics();
+}
+
+function renderMetrics(){
+  const g=yearData(gastos),l=yearData(lucros);
+  const tg=g.reduce((s,e)=>s+e.valBRL,0);
+  const tl=l.reduce((s,e)=>s+e.valBRL,0);
+  const saldo=tl-tg;
+  const cripto=l.filter(e=>e.cat==='Cripto').reduce((s,e)=>s+e.valBRL,0);
+  const bet=l.filter(e=>e.cat==='Bet Esportiva').reduce((s,e)=>s+e.valBRL,0);
+  const defi=l.filter(e=>e.cat==='DeFi').reduce((s,e)=>s+e.valBRL,0);
+  const totInv=invest.reduce((s,e)=>s+e.atualBRL,0);
+
+  document.getElementById('sub-ano').textContent='ano '+curYear()+' · USD/BRL '+usdRate.toFixed(2);
+
+  document.getElementById('metrics').innerHTML=`
+    <div class="metric"><div class="m-label">Total lucros</div><div class="m-val green">${brl(tl)}</div></div>
+    <div class="metric"><div class="m-label">Total gastos</div><div class="m-val red">${brl(tg)}</div></div>
+    <div class="metric"><div class="m-label">Cripto</div><div class="m-val amber">${brl(cripto)}</div></div>
+    <div class="metric"><div class="m-label">Bet esportiva</div><div class="m-val green">${brl(bet)}</div></div>
+    <div class="metric"><div class="m-label">DeFi</div><div class="m-val purple">${brl(defi)}</div></div>
+    <div class="metric"><div class="m-label">Carteira</div><div class="m-val blue">${brl(totInv)}</div></div>`;
+
+  const pos=saldo>=0;
+  document.getElementById('saldoBanner').innerHTML=`
+    <div class="saldo-banner ${pos?'pos':'neg'}">
+      <div>
+        <div class="saldo-label">Saldo do ano — lucros menos gastos</div>
+        <div class="saldo-detail">${brl(tl)} lucros &nbsp;·&nbsp; ${brl(tg)} gastos</div>
+      </div>
+      <div class="saldo-num">${pos?'+':'−'} ${brl(saldo)}</div>
+    </div>`;
+}
+
+function renderChartGeral(){
+  const g=yearData(gastos),l=yearData(lucros);
+  const mg=Array(12).fill(0),ml=Array(12).fill(0);
+  g.forEach(e=>{mg[new Date(e.date+'T00:00').getMonth()]+=e.valBRL;});
+  l.forEach(e=>{ml[new Date(e.date+'T00:00').getMonth()]+=e.valBRL;});
+  const ms=ml.map((v,i)=>parseFloat((v-mg[i]).toFixed(2)));
+  const ctx=document.getElementById('cGeral').getContext('2d');
+  if(chartG){chartG.destroy();}
+  chartG=new Chart(ctx,{type:'bar',data:{labels:MONTHS,datasets:[
+    {label:'Lucros',data:ml.map(v=>+v.toFixed(2)),backgroundColor:'rgba(62,207,142,.7)',borderRadius:4,borderSkipped:false},
+    {label:'Gastos',data:mg.map(v=>+v.toFixed(2)),backgroundColor:'rgba(242,107,107,.7)',borderRadius:4,borderSkipped:false},
+    {label:'Saldo',data:ms,backgroundColor:ms.map(v=>v>=0?'rgba(77,166,255,.7)':'rgba(245,166,35,.7)'),borderRadius:4,borderSkipped:false}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>(c.raw<0?'- ':'')+brl(Math.abs(c.raw))}}},scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#555a72',autoSkip:false,maxRotation:0}},y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{callback:v=>brl(Math.abs(v)).replace('R$ ','R$'),font:{size:9},color:'#555a72'}}}}});
+}
+
+function renderChartLucros(){
+  const l=yearData(lucros);
+  const by={};l.forEach(e=>{by[e.cat]=(by[e.cat]||0)+e.valBRL;});
+  const cats=Object.keys(by);
+  const el=document.getElementById('legLucros');
+  if(!cats.length){el.innerHTML='';return;}
+  const vals=cats.map(c=>+by[c].toFixed(2));
+  const colors=cats.map((_,i)=>LCOLORS[i%LCOLORS.length]);
+  const total=vals.reduce((s,v)=>s+v,0);
+  el.innerHTML=cats.map((c,i)=>`<span><span class="sq" style="background:${colors[i]}"></span>${c} ${total>0?((by[c]/total)*100).toFixed(0)+'%':''}</span>`).join('');
+  const ctx=document.getElementById('cLucros').getContext('2d');
+  if(chartL){chartL.destroy();}
+  chartL=new Chart(ctx,{type:'doughnut',data:{labels:cats,datasets:[{data:vals,backgroundColor:colors.map(c=>c+'cc'),borderColor:colors,borderWidth:1.5,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>brl(c.raw)}}}}});
+}
+
+function renderFilters(){
+  const gc=['Todos',...Object.keys(GCAT)];
+  document.getElementById('fG').innerHTML=gc.map(c=>`<button class="fbtn ${gFilter===c?'active':''}" onclick="setGF('${c}')">${c}</button>`).join('');
+  const lc=['Todos',...Object.keys(LCAT)];
+  document.getElementById('fL').innerHTML=lc.map(c=>`<button class="fbtn ${lFilter===c?'active':''}" onclick="setLF('${c}')">${c}</button>`).join('');
+}
+
+function setGF(f){gFilter=f;renderListG();}
+function setLF(f){lFilter=f;renderListL();}
+
+function renderListG(){
+  const data=yearData(gastos).filter(e=>gFilter==='Todos'||e.cat===gFilter).sort((a,b)=>b.date.localeCompare(a.date));
+  const el=document.getElementById('listG');
+  if(!data.length){el.innerHTML='<div class="empty">// nenhum lançamento</div>';return;}
+  el.innerHTML=data.map(e=>{
+    const cc=GCAT[e.cat]||GCAT['Outros'];
+    const d=new Date(e.date+'T00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+    return `<div class="row">
+      <span class="badge" style="background:${cc.bg};color:${cc.tc}">${e.cat}</span>
+      <span class="desc">${e.desc}</span>
+      <span class="dt">${d}</span>
+      <span class="amt red">− ${brl(e.val)}</span>
+      <button class="del-btn" onclick="delG(${e.id})" aria-label="Remover">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function renderListL(){
+  const data=yearData(lucros).filter(e=>lFilter==='Todos'||e.cat===lFilter).sort((a,b)=>b.date.localeCompare(a.date));
+  const el=document.getElementById('listL');
+  if(!data.length){el.innerHTML='<div class="empty">// nenhum lançamento</div>';return;}
+  el.innerHTML=data.map(e=>{
+    const cc=LCAT[e.cat]||LCAT['Outros'];
+    const d=new Date(e.date+'T00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+    const isUSD=e.moeda==='USD';
+    return `<div class="row">
+      <span class="badge" style="background:${cc.bg};color:${cc.tc}">${e.cat}</span>
+      ${isUSD?'<span class="cur-badge">USD</span>':''}
+      <span class="desc">${e.desc}</span>
+      <span class="dt">${d}</span>
+      <span class="amt green">+ ${isUSD?usd(e.val):brl(e.val)}</span>
+      ${isUSD?`<span class="amt-sub">≈ ${brl(e.valBRL)} · cot. ${e.cotSnap?.toFixed(2)||usdRate.toFixed(2)}</span>`:''}
+      <button class="del-btn" onclick="delL(${e.id})" aria-label="Remover">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function renderInvest(){
+  const el=document.getElementById('invGrid');
+  if(!invest.length){el.innerHTML='<div class="empty">// nenhum investimento registrado</div>';return;}
+  el.innerHTML=invest.map(e=>{
+    const cc=ICAT[e.tipo]||ICAT['Outros'];
+    const isUSD=e.moeda==='USD';
+    const pnl=e.atualBRL-e.aporteBRL;
+    const pct=e.aporteBRL>0?(pnl/e.aporteBRL*100):0;
+    const pos=pnl>=0;
+    const aStr=isUSD?`${usd(e.aporte)} ≈ ${brl(e.aporteBRL)}`:brl(e.aporte);
+    return `<div class="inv-card">
+      <div class="inv-card-head">
+        <div class="inv-name">${e.nome}</div>
+        <button class="del-btn" onclick="delI(${e.id})" aria-label="Remover" style="font-size:12px">✕</button>
+      </div>
+      <div class="inv-tipo"><span class="badge" style="background:${cc.bg};color:${cc.tc}">${e.tipo}</span>${isUSD?'<span class="cur-badge" style="margin-left:5px">USD</span>':''}</div>
+      <div class="inv-row"><span class="k">Aportado</span><span class="v">${aStr}</span></div>
+      <div class="inv-row"><span class="k">Atual ${isUSD?'($)':'(R$)'}</span>
+        <span class="inv-atual-wrap">
+          <input class="inv-atual-input" type="number" value="${e.atual}" step="0.01" onchange="updateInvAtual(${e.id},this.value)" aria-label="Valor atual">
+        </span>
+      </div>
+      ${isUSD?`<div class="inv-row"><span class="k">Atual (R$)</span><span class="v">${brl(e.atualBRL)}</span></div>`:''}
+      <div class="inv-pnl">
+        <span class="label">P&L</span>
+        <span class="val" style="color:${pos?'#3ecf8e':'#f26b6b'}">${pos?'+':''}${brl(pnl)} <span style="font-size:11px;font-weight:400">(${pct>=0?'+':''}${pct.toFixed(1)}%)</span></span>
+      </div>
+    </div>`;
+  }).join('');
+
+  const totA=invest.reduce((s,e)=>s+e.aporteBRL,0);
+  const totC=invest.reduce((s,e)=>s+e.atualBRL,0);
+  const totP=totC-totA;
+  const totPct=totA>0?(totP/totA*100):0;
+  document.getElementById('invMetrics').innerHTML=`
+    <div class="metric"><div class="m-label">Total aportado</div><div class="m-val blue">${brl(totA)}</div></div>
+    <div class="metric"><div class="m-label">Valor atual</div><div class="m-val blue">${brl(totC)}</div></div>
+    <div class="metric"><div class="m-label">Lucro / Prejuízo</div><div class="m-val ${totP>=0?'green':'red'}">${totP>=0?'+':''}${brl(totP)}</div></div>
+    <div class="metric"><div class="m-label">Rentabilidade</div><div class="m-val ${totPct>=0?'green':'red'}">${totPct>=0?'+':''}${totPct.toFixed(1)}%</div></div>`;
+}
+
+function sw(tab){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+  document.getElementById('nav-'+tab).classList.add('active');
+  if(tab==='visao'){renderChartGeral();renderChartLucros();}
+}
+
+function render(){
+  renderMetrics();
+  renderFilters();
+  renderListG();
+  renderListL();
+  renderInvest();
+  if(document.getElementById('page-visao').classList.contains('active')){
+    renderChartGeral();renderChartLucros();
+  }
+}
+
+const today=new Date().toISOString().split('T')[0];
+document.getElementById('gDate').value=today;
+document.getElementById('lDate').value=today;
+buildYears();
+fetchCotacoes();
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 {
   "versao": 1,
-  "atualizado": "2026-05-25T20:52:02.422Z",
+  "atualizado": "2026-05-25T20:52:20.918Z",
   "gastos": [
     {
       "id": 1779742284638,
@@ -28,6 +28,15 @@
       "val": 9178,
       "moeda": "BRL",
       "valBRL": 9178
+    },
+    {
+      "id": 1779742338909,
+      "date": "2026-04-30",
+      "desc": "Abril",
+      "cat": "Outros",
+      "val": 5408,
+      "moeda": "BRL",
+      "valBRL": 5408
     }
   ],
   "lucros": [

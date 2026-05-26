@@ -1,6 +1,6 @@
 {
   "versao": 1,
-  "atualizado": "2026-05-26T14:59:56.825Z",
+  "atualizado": "2026-05-26T20:26:38.038Z",
   "gastos": [
     {
       "id": 1779742284638,
@@ -91,5 +91,19 @@
       "valBRL": 14844.4
     }
   ],
-  "invest": []
+  "invest": [
+    {
+      "id": 1779827196031,
+      "date": "2026-05-25",
+      "nome": "BTC",
+      "tipo": "Cripto (trade)",
+      "moeda": "USD",
+      "aporte": 522,
+      "aporteBRL": 2617.83,
+      "cotSnap": 5.015,
+      "precoMedio": 69400,
+      "qtd": 0.007521613832853026,
+      "atualRF": 0
+    }
+  ]
 }

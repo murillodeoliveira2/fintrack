@@ -1,6 +1,6 @@
 {
   "versao": 1,
-  "atualizado": "2026-05-26T20:26:38.038Z",
+  "atualizado": "2026-05-26T20:30:37.011Z",
   "gastos": [
     {
       "id": 1779742284638,
@@ -103,6 +103,19 @@
       "cotSnap": 5.015,
       "precoMedio": 69400,
       "qtd": 0.007521613832853026,
+      "atualRF": 0
+    },
+    {
+      "id": 1779827435006,
+      "date": "2026-05-25",
+      "nome": "BTC",
+      "tipo": "Cripto (trade)",
+      "moeda": "USD",
+      "aporte": 150,
+      "aporteBRL": 752.25,
+      "cotSnap": 5.015,
+      "precoMedio": 64000,
+      "qtd": 0.00234375,
       "atualRF": 0
     }
   ]

@@ -1,6 +1,6 @@
 {
   "versao": 1,
-  "atualizado": "2026-05-26T02:41:38.863Z",
+  "atualizado": "2026-05-26T14:59:56.825Z",
   "gastos": [
     {
       "id": 1779742284638,
@@ -89,16 +89,6 @@
       "val": 2960,
       "cotSnap": 5.015,
       "valBRL": 14844.4
-    },
-    {
-      "id": 1779742075313,
-      "date": "2026-05-25",
-      "desc": "ESP Maio",
-      "cat": "Bet Esportiva",
-      "moeda": "BRL",
-      "val": 2636,
-      "cotSnap": 5.0177,
-      "valBRL": 2636
     }
   ],
   "invest": []
